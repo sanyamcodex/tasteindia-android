@@ -1,0 +1,16 @@
+{
+  "idMeal": "fixture-1",
+  "strMeal": "Fixture Curry",
+  "strIngredient1": "  Chicken ",
+  "strMeasure1": "500 g",
+  "strIngredient2": null,
+  "strMeasure2": "ignored",
+  "strIngredient3": "   ",
+  "strMeasure3": "ignored",
+  "strIngredient4": "Garam masala",
+  "strMeasure4": null,
+  "strIngredient7": " Coriander ",
+  "strMeasure7": "1 tbsp",
+  "strIngredient20": " Salt ",
+  "strMeasure20": "to taste"
+}
