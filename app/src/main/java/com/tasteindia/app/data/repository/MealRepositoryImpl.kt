@@ -8,9 +8,11 @@ import com.tasteindia.app.domain.model.AppError
 import com.tasteindia.app.domain.model.Meal
 import com.tasteindia.app.domain.model.MealDetail
 import com.tasteindia.app.domain.model.safeApiCall
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
@@ -35,7 +37,8 @@ class MealRepositoryImpl @Inject constructor(
 
     // In-flight request deduplication map protected by mutex
     private val inflightMutex = Mutex()
-    private val inflightDetails = mutableMapOf<String, Deferred<Result<MealDetail>>>()
+    private val inflightDetails = mutableMapOf<String, Deferred<MealDetail>>()
+    private val requestScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override suspend fun getIndianMeals(): Result<List<Meal>> {
         indianIdsMutex.withLock {
@@ -79,36 +82,32 @@ class MealRepositoryImpl @Inject constructor(
         }
 
         // Deduplicate in-flight requests for the same meal ID
-        val deferred: Deferred<Result<MealDetail>> = inflightMutex.withLock {
+        val deferred: Deferred<MealDetail> = inflightMutex.withLock {
             detailCache[id]?.let {
                 return Result.success(it)
             }
 
             inflightDetails.getOrPut(id) {
-                coroutineScope {
-                    async {
-                        try {
-                            val callResult = safeApiCall {
-                                val response = apiService.lookupById(id)
-                                val dto = response.meals?.firstOrNull()
-                                    ?: throw AppError.Unknown("No meal detail found for ID $id")
-                                dto.toDomain()
-                            }
-                            callResult.onSuccess { detail ->
-                                detailCache[id] = detail
-                            }
-                            callResult
-                        } finally {
-                            inflightMutex.withLock {
-                                inflightDetails.remove(id)
-                            }
+                requestScope.async {
+                    try {
+                        val detail = safeApiCall {
+                            val response = apiService.lookupById(id)
+                            val dto = response.meals?.firstOrNull()
+                                ?: throw AppError.Unknown("No meal detail found for ID $id")
+                            dto.toDomain()
+                        }.getOrThrow()
+                        detailCache[id] = detail
+                        detail
+                    } finally {
+                        inflightMutex.withLock {
+                            inflightDetails.remove(id)
                         }
                     }
                 }
             }
         }
 
-        return deferred.await()
+        return safeApiCall { deferred.await() }
     }
 
     override suspend fun filterByCategoryWithinIndia(category: String): Result<Set<String>> {

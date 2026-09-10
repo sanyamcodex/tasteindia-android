@@ -6,7 +6,7 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.util.concurrent.TimeoutException
 
-inline fun <T> safeApiCall(block: () -> T): Result<T> {
+inline suspend fun <T> safeApiCall(crossinline block: suspend () -> T): Result<T> {
     return try {
         Result.success(block())
     } catch (e: AppError) {
