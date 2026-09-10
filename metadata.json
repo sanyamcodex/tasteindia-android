@@ -1,0 +1,8 @@
+{
+  "name": "TasteIndia",
+  "description": "Authentic Indian cuisine recipe explorer and planner built with Kotlin and Jetpack Compose.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
