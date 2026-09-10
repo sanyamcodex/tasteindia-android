@@ -31,6 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
@@ -135,5 +136,21 @@ fun MealRow(
                 )
             }
         }
+    }
+}
+
+@Preview(name = "Meal row image failure", showBackground = true)
+@Composable
+fun MealRowImageFailurePreview() {
+    MaterialTheme {
+        MealRow(
+            meal = Meal(
+                id = "preview",
+                name = "Butter Chicken",
+                thumbUrl = "https://invalid.example/preview-image.jpg"
+            ),
+            onMealClick = {},
+            onToggleFavourite = {}
+        )
     }
 }

@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -49,6 +50,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,6 +58,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.SubcomposeAsyncImage
@@ -147,7 +150,9 @@ fun DetailsScreen(
 
                 is DetailsUiState.Success -> {
                     val meal = state.mealDetail
-                    val scrollState = rememberScrollState()
+                    val scrollState = rememberSaveable(saver = ScrollState.Saver) {
+                        ScrollState(0)
+                    }
 
                     Column(
                         modifier = Modifier
@@ -423,6 +428,74 @@ fun DetailsScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Preview(name = "Details optional fields", showBackground = true)
+@Composable
+fun DetailsScreenMissingOptionalFieldsPreview() {
+    DetailsScreenPreviewContent(
+        meal = MealDetail(
+            id = "preview",
+            name = "Dal Tadka",
+            thumbUrl = "",
+            ingredients = emptyList(),
+            instructions = "Heat the pan.\n\nAdd the spices and lentils."
+        )
+    )
+}
+
+@Preview(name = "Details long instructions", showBackground = true)
+@Composable
+fun DetailsScreenLongInstructionsPreview() {
+    DetailsScreenPreviewContent(
+        meal = MealDetail(
+            id = "preview",
+            name = "Hyderabadi Biryani",
+            thumbUrl = "",
+            category = "Rice",
+            area = "Indian",
+            instructions = List(8) { index ->
+                "Step ${index + 1}: combine the ingredients carefully and cook until the flavours are developed."
+            }.joinToString("\n\n")
+        )
+    )
+}
+
+@Composable
+private fun DetailsScreenPreviewContent(meal: MealDetail) {
+    MaterialTheme {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
+        ) {
+            Text(
+                text = meal.name,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            if (!meal.category.isNullOrBlank() || !meal.area.isNullOrBlank()) {
+                Text(
+                    text = listOfNotNull(meal.category, meal.area).joinToString(" • "),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Instructions",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = meal.instructions,
+                style = MaterialTheme.typography.bodyLarge
+            )
         }
     }
 }
