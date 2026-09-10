@@ -29,7 +29,7 @@ class DetailsViewModel @Inject constructor(
         private const val KEY_IS_FAVOURITE = "key_is_favourite"
     }
 
-    val mealId: String = checkNotNull(savedStateHandle[Routes.Details.ARG_MEAL_ID])
+    private val mealId: String = checkNotNull(savedStateHandle[Routes.Details.ARG_MEAL_ID])
 
     private val isFavouriteFlow = repository.getFavouriteIds()
         .map { favIds -> favIds.contains(mealId) }
