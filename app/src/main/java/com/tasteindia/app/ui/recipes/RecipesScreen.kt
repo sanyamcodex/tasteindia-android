@@ -42,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tasteindia.app.domain.model.FilterState
+import com.tasteindia.app.domain.model.Meal
 import com.tasteindia.app.ui.components.EmptyState
 import com.tasteindia.app.ui.components.ErrorState
 import com.tasteindia.app.ui.components.LoadingState
@@ -221,6 +222,7 @@ fun RecipesScreenSuccessPreview() {
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RecipesScreenPreviewContent(state: RecipesUiState) {
     MaterialTheme {
