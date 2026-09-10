@@ -1,5 +1,7 @@
 package com.tasteindia.app.data.repository
 
+import com.tasteindia.app.data.local.FavouriteDao
+import com.tasteindia.app.data.local.FavouriteEntity
 import com.tasteindia.app.data.remote.MealApiService
 import com.tasteindia.app.data.remote.toDomain
 import com.tasteindia.app.domain.model.AppError
@@ -9,6 +11,8 @@ import com.tasteindia.app.domain.model.safeApiCall
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.ConcurrentHashMap
@@ -17,7 +21,8 @@ import javax.inject.Singleton
 
 @Singleton
 class MealRepositoryImpl @Inject constructor(
-    private val apiService: MealApiService
+    private val apiService: MealApiService,
+    private val favouriteDao: FavouriteDao
 ) : MealRepository {
 
     // Indian boundary ID set cached in-memory for this session
@@ -153,5 +158,25 @@ class MealRepositoryImpl @Inject constructor(
             val response = apiService.listCategories()
             response.meals?.mapNotNull { it.name.takeIf { n -> n.isNotBlank() } } ?: emptyList()
         }
+    }
+
+    override fun getFavouriteIds(): Flow<List<String>> {
+        return favouriteDao.getAllIds()
+    }
+
+    override suspend fun toggleFavourite(id: String) {
+        val currentIds = favouriteDao.getAllIds().first()
+        if (currentIds.contains(id)) {
+            favouriteDao.delete(id)
+        } else {
+            favouriteDao.insert(FavouriteEntity(mealId = id))
+        }
+    }
+
+    override fun getCachedIndianMeals(): List<Meal> {
+        val detailMeals = detailCache.values.map { it.toMeal() }
+        val indianMeals = synchronized(cachedIndianMeals) { cachedIndianMeals.toList() }
+        val merged = (indianMeals + detailMeals).distinctBy { it.id }
+        return merged
     }
 }

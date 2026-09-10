@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -129,7 +129,7 @@ fun MealRow(
                     .testTag("meal_favourite_button_${meal.id}")
             ) {
                 Icon(
-                    imageVector = if (meal.isFavourite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                    imageVector = if (meal.isFavourite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
                     contentDescription = if (meal.isFavourite) "Remove ${meal.name} from favourites" else "Add ${meal.name} to favourites",
                     tint = if (meal.isFavourite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                 )

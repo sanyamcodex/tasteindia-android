@@ -10,4 +10,7 @@ interface MealRepository {
     suspend fun filterByIngredientWithinIndia(ingredient: String): Result<Set<String>>
     suspend fun searchIndianMealsByName(name: String): Result<List<Meal>>
     suspend fun listCategories(): Result<List<String>>
+    fun getFavouriteIds(): kotlinx.coroutines.flow.Flow<List<String>>
+    suspend fun toggleFavourite(id: String)
+    fun getCachedIndianMeals(): List<Meal>
 }

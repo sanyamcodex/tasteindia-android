@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -30,7 +31,8 @@ class DetailsViewModel @Inject constructor(
 
     val mealId: String = checkNotNull(savedStateHandle[Routes.Details.ARG_MEAL_ID])
 
-    private val isFavouriteFlow = savedStateHandle.getStateFlow(KEY_IS_FAVOURITE, false)
+    private val isFavouriteFlow = repository.getFavouriteIds()
+        .map { favIds -> favIds.contains(mealId) }
     private val retryTrigger = MutableStateFlow(0)
 
     val uiState: StateFlow<DetailsUiState> = retryTrigger.flatMapLatest {
@@ -65,8 +67,9 @@ class DetailsViewModel @Inject constructor(
     )
 
     fun toggleFavourite() {
-        val current = savedStateHandle.get<Boolean>(KEY_IS_FAVOURITE) ?: false
-        savedStateHandle[KEY_IS_FAVOURITE] = !current
+        viewModelScope.launch {
+            repository.toggleFavourite(mealId)
+        }
     }
 
     fun setFavourite(isFav: Boolean) {

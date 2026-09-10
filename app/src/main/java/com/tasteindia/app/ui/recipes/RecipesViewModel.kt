@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -45,8 +46,14 @@ class RecipesViewModel @Inject constructor(
     private val favouritesOnlyState = savedStateHandle.getStateFlow(KEY_FAVOURITES_ONLY, false)
     private val sortOrderState = savedStateHandle.getStateFlow(KEY_SORT_ORDER, SortOrder.NAME_ASC.name)
 
-    // Set of favourite meal IDs preserved in SavedStateHandle
-    private val favouriteIds = savedStateHandle.getStateFlow(KEY_FAVOURITES_SET, emptySet<String>())
+    // Set of favourite meal IDs sourced reactively from Room DAO flow via repository
+    private val favouriteIds = repository.getFavouriteIds()
+        .map { it.toSet() }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000L),
+            initialValue = emptySet()
+        )
 
     // Trigger for manual retry or refresh
     private val retryTrigger = MutableStateFlow(0)
@@ -233,13 +240,9 @@ class RecipesViewModel @Inject constructor(
     }
 
     fun toggleFavourite(id: String) {
-        val currentFavs = savedStateHandle.get<Set<String>>(KEY_FAVOURITES_SET) ?: emptySet()
-        val updated = if (currentFavs.contains(id)) {
-            currentFavs - id
-        } else {
-            currentFavs + id
+        viewModelScope.launch {
+            repository.toggleFavourite(id)
         }
-        savedStateHandle[KEY_FAVOURITES_SET] = updated
     }
 
     fun retry() {
