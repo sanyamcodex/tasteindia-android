@@ -239,9 +239,9 @@ class RecipesViewModel @Inject constructor(
         savedStateHandle[KEY_SORT_ORDER] = newFilters.sortOrder.name
     }
 
-    fun toggleFavourite(id: String) {
+    fun toggleFavourite(meal: Meal) {
         viewModelScope.launch {
-            repository.toggleFavourite(id)
+            repository.toggleFavourite(meal)
         }
     }
 

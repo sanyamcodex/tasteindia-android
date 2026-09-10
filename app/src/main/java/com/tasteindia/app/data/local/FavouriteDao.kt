@@ -17,4 +17,7 @@ interface FavouriteDao {
 
     @Query("SELECT mealId FROM favourites")
     fun getAllIds(): Flow<List<String>>
+
+    @Query("SELECT * FROM favourites")
+    fun getAll(): Flow<List<FavouriteEntity>>
 }

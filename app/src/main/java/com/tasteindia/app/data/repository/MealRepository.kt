@@ -2,6 +2,7 @@ package com.tasteindia.app.data.repository
 
 import com.tasteindia.app.domain.model.Meal
 import com.tasteindia.app.domain.model.MealDetail
+import com.tasteindia.app.data.local.FavouriteEntity
 
 interface MealRepository {
     suspend fun getIndianMeals(): Result<List<Meal>>
@@ -11,6 +12,7 @@ interface MealRepository {
     suspend fun searchIndianMealsByName(name: String): Result<List<Meal>>
     suspend fun listCategories(): Result<List<String>>
     fun getFavouriteIds(): kotlinx.coroutines.flow.Flow<List<String>>
-    suspend fun toggleFavourite(id: String)
+    fun getFavourites(): kotlinx.coroutines.flow.Flow<List<FavouriteEntity>>
+    suspend fun toggleFavourite(meal: Meal)
     fun getCachedIndianMeals(): List<Meal>
 }

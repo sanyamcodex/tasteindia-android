@@ -110,7 +110,7 @@ fun FavouritesScreen(
                     MealRow(
                         meal = meal,
                         onMealClick = { onMealClick(meal.id) },
-                        onToggleFavourite = { viewModel.toggleFavourite(meal.id) }
+                        onToggleFavourite = { selectedMeal -> viewModel.toggleFavourite(selectedMeal) }
                     )
                 }
             }

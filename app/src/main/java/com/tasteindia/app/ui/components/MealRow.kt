@@ -40,7 +40,7 @@ import com.tasteindia.app.domain.model.Meal
 fun MealRow(
     meal: Meal,
     onMealClick: (String) -> Unit,
-    onToggleFavourite: (String) -> Unit,
+    onToggleFavourite: (Meal) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -123,7 +123,7 @@ fun MealRow(
             }
 
             IconButton(
-                onClick = { onToggleFavourite(meal.id) },
+                onClick = { onToggleFavourite(meal) },
                 modifier = Modifier
                     .size(48.dp)
                     .testTag("meal_favourite_button_${meal.id}")

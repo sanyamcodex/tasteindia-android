@@ -68,7 +68,10 @@ class DetailsViewModel @Inject constructor(
 
     fun toggleFavourite() {
         viewModelScope.launch {
-            repository.toggleFavourite(mealId)
+            val state = uiState.value
+            if (state is DetailsUiState.Success) {
+                repository.toggleFavourite(state.mealDetail.toMeal())
+            }
         }
     }
 

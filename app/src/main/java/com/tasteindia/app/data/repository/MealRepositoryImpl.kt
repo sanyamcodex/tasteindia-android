@@ -163,12 +163,22 @@ class MealRepositoryImpl @Inject constructor(
         return favouriteDao.getAllIds()
     }
 
-    override suspend fun toggleFavourite(id: String) {
+    override fun getFavourites(): Flow<List<FavouriteEntity>> {
+        return favouriteDao.getAll()
+    }
+
+    override suspend fun toggleFavourite(meal: Meal) {
         val currentIds = favouriteDao.getAllIds().first()
-        if (currentIds.contains(id)) {
-            favouriteDao.delete(id)
+        if (currentIds.contains(meal.id)) {
+            favouriteDao.delete(meal.id)
         } else {
-            favouriteDao.insert(FavouriteEntity(mealId = id))
+            favouriteDao.insert(
+                FavouriteEntity(
+                    mealId = meal.id,
+                    name = meal.name,
+                    thumbUrl = meal.thumbUrl
+                )
+            )
         }
     }
 
