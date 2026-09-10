@@ -186,8 +186,50 @@ class RecipesViewModel @Inject constructor(
             initialValue = RecipesUiState.Loading
         )
 
+    // Categories list loaded from repository
+    val categories: StateFlow<List<String>> = flow {
+        val result = repository.listCategories()
+        emit(result.getOrDefault(emptyList()))
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = emptyList()
+    )
+
+    // Derived ingredients list from Indian meals or popular spices
+    val ingredients: StateFlow<List<String>> = flow {
+        val defaultSpices = listOf(
+            "Chicken", "Garam Masala", "Ginger", "Garlic", "Onion",
+            "Coriander", "Cumin", "Turmeric", "Chili", "Rice", "Tomato",
+            "Yogurt", "Paneer", "Butter", "Cardamom", "Cinnamon", "Cloves"
+        )
+        val mealsResult = repository.getIndianMeals()
+        val derived = mealsResult.map { meals ->
+            meals.flatMap { meal ->
+                meal.name.split(" ", "-", ",")
+                    .map { it.trim() }
+                    .filter { it.length > 3 }
+            }.distinct().sorted()
+        }.getOrDefault(emptyList())
+
+        val merged = (defaultSpices + derived).distinct().sorted()
+        emit(merged)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = emptyList()
+    )
+
     fun onSearchQueryChange(newQuery: String) {
         savedStateHandle[KEY_SEARCH_QUERY] = newQuery
+    }
+
+    fun applyFilters(newFilters: FilterState) {
+        savedStateHandle[KEY_SEARCH_QUERY] = newFilters.query
+        savedStateHandle[KEY_CATEGORY_FILTER] = newFilters.category
+        savedStateHandle[KEY_INGREDIENT_FILTER] = newFilters.ingredient
+        savedStateHandle[KEY_FAVOURITES_ONLY] = newFilters.favouritesOnly
+        savedStateHandle[KEY_SORT_ORDER] = newFilters.sortOrder.name
     }
 
     fun toggleFavourite(id: String) {

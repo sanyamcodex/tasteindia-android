@@ -41,10 +41,12 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tasteindia.app.domain.model.FilterState
 import com.tasteindia.app.ui.components.EmptyState
 import com.tasteindia.app.ui.components.ErrorState
 import com.tasteindia.app.ui.components.LoadingState
 import com.tasteindia.app.ui.components.MealRow
+import com.tasteindia.app.ui.filters.FilterBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,9 +56,16 @@ fun RecipesScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val categories by viewModel.categories.collectAsStateWithLifecycle()
+    val ingredients by viewModel.ingredients.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
 
-    var searchQuery by rememberSaveable { mutableStateOf("") }
+    // Determine current active filter state
+    val currentFilterState = when (val state = uiState) {
+        is RecipesUiState.Success -> state.activeFilters
+        is RecipesUiState.Empty -> state.activeFilters
+        else -> FilterState()
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -82,50 +91,14 @@ fun RecipesScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Search Bar Input
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { newQuery ->
-                    searchQuery = newQuery
-                    viewModel.onSearchQueryChange(newQuery)
-                },
-                placeholder = { Text("Search Indian recipes...") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search"
-                    )
-                },
-                trailingIcon = {
-                    AnimatedVisibility(
-                        visible = searchQuery.isNotEmpty(),
-                        enter = fadeIn(),
-                        exit = fadeOut()
-                    ) {
-                        IconButton(
-                            onClick = {
-                                searchQuery = ""
-                                viewModel.onSearchQueryChange("")
-                            },
-                            modifier = Modifier.testTag("clear_search_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Clear,
-                                contentDescription = "Clear search"
-                            )
-                        }
-                    }
-                },
-                singleLine = true,
-                shape = MaterialTheme.shapes.large,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.15f)
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .testTag("recipes_search_input")
+            // FilterBar above the list
+            FilterBar(
+                filterState = currentFilterState,
+                categories = categories,
+                ingredients = ingredients,
+                onFilterChange = { newFilters ->
+                    viewModel.applyFilters(newFilters)
+                }
             )
 
             // Content based on UiState
@@ -142,9 +115,8 @@ fun RecipesScreen(
                     is RecipesUiState.Empty -> {
                         EmptyState(
                             message = state.message,
-                            actionLabel = if (searchQuery.isNotBlank()) "Clear Search" else null,
+                            actionLabel = if (currentFilterState != FilterState()) "Clear all filters" else null,
                             onAction = {
-                                searchQuery = ""
                                 viewModel.clearFilters()
                             },
                             modifier = Modifier.fillMaxSize()
