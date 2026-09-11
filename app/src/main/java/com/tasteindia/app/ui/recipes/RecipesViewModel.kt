@@ -63,6 +63,27 @@ class RecipesViewModel @Inject constructor(
         .debounce(300L)
         .distinctUntilChanged()
 
+    val filterState: StateFlow<FilterState> = combine(
+        searchQueryState,
+        categoryFilterState,
+        ingredientFilterState,
+        favouritesOnlyState,
+        sortOrderState
+    ) { query, category, ingredient, favouritesOnly, sortOrderStr ->
+        FilterState(
+            query = query,
+            category = category,
+            ingredient = ingredient,
+            favouritesOnly = favouritesOnly,
+            sortOrder = runCatching { SortOrder.valueOf(sortOrderStr) }
+                .getOrDefault(SortOrder.NAME_ASC)
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = FilterState()
+    )
+
     private val filterCriteria = combine(
         categoryFilterState,
         ingredientFilterState,
@@ -109,17 +130,14 @@ class RecipesViewModel @Inject constructor(
                     sortOrder = params.sortOrder
                 )
 
-                val result = repository.getIndianMeals()
+                val result = if (params.query.isBlank()) {
+                    repository.getIndianMeals()
+                } else {
+                    repository.searchIndianMealsByName(params.query)
+                }
                 result.fold(
-                    onSuccess = { allIndianMeals ->
-                        var filtered = allIndianMeals
-
-                        // 1. Apply name search if non-empty
-                        if (params.query.isNotBlank()) {
-                            filtered = filtered.filter { meal ->
-                                meal.name.contains(params.query, ignoreCase = true)
-                            }
-                        }
+                    onSuccess = { candidateMeals ->
+                        var filtered = candidateMeals
 
                         // 2. Filter by category if set
                         if (!params.category.isNullOrBlank()) {

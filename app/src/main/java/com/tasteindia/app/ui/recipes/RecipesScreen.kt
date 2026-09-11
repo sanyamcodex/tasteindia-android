@@ -57,17 +57,11 @@ fun RecipesScreen(
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val currentFilterState by viewModel.filterState.collectAsStateWithLifecycle()
     val categories by viewModel.categories.collectAsStateWithLifecycle()
     val ingredients by viewModel.ingredients.collectAsStateWithLifecycle()
     val listState = rememberSaveable(saver = LazyListState.Saver) {
         LazyListState()
-    }
-
-    // Determine current active filter state
-    val currentFilterState = when (val state = uiState) {
-        is RecipesUiState.Success -> state.activeFilters
-        is RecipesUiState.Empty -> state.activeFilters
-        else -> FilterState()
     }
 
     Scaffold(

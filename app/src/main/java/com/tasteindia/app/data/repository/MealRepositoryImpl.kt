@@ -49,7 +49,9 @@ class MealRepositoryImpl @Inject constructor(
 
         val result = safeApiCall {
             val response = apiService.filterByArea("Indian")
-            val list = response.meals?.map { it.toDomain() } ?: emptyList()
+            val list = response.meals
+                ?.map { it.toDomain() }
+                ?: throw AppError.Unknown("TheMealDB returned no Indian meals")
             list
         }
 
@@ -116,7 +118,10 @@ class MealRepositoryImpl @Inject constructor(
 
         val categoryResult = safeApiCall {
             val response = apiService.filterByCategory(category)
-            response.meals?.mapNotNull { it.idMeal }?.toSet() ?: emptySet()
+            response.meals
+                ?.mapNotNull { it.idMeal }
+                ?.toSet()
+                ?: throw AppError.Unknown("TheMealDB returned no category meals")
         }
 
         return categoryResult.map { categoryIds ->
@@ -130,7 +135,10 @@ class MealRepositoryImpl @Inject constructor(
 
         val ingredientResult = safeApiCall {
             val response = apiService.filterByIngredient(ingredient)
-            response.meals?.mapNotNull { it.idMeal }?.toSet() ?: emptySet()
+            response.meals
+                ?.mapNotNull { it.idMeal }
+                ?.toSet()
+                ?: throw AppError.Unknown("TheMealDB returned no ingredient meals")
         }
 
         return ingredientResult.map { ingredientIds ->
@@ -144,7 +152,9 @@ class MealRepositoryImpl @Inject constructor(
 
         val searchResult = safeApiCall {
             val response = apiService.searchByName(name)
-            response.meals?.map { it.toDomain() } ?: emptyList()
+            response.meals
+                ?.map { it.toDomain() }
+                ?: throw AppError.Unknown("TheMealDB returned no search meals")
         }
 
         return searchResult.map { searchMeals ->
