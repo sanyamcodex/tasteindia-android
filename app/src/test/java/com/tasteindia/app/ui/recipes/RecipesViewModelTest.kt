@@ -16,9 +16,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -28,7 +30,7 @@ import org.junit.Test
 
 class RecipesViewModelTest {
 
-    private lateinit var dispatcher: StandardTestDispatcher
+    private lateinit var dispatcher: TestDispatcher
 
     @Before
     fun setUp() {
@@ -77,9 +79,14 @@ class RecipesViewModelTest {
             savedStateHandle = SavedStateHandle()
         )
 
-        viewModel.applyFilters(FilterState(query = "pasta"))
+        viewModel.filterState.test {
+            awaitItem()
+            viewModel.applyFilters(FilterState(query = "pasta"))
+            runCurrent()
 
-        assertEquals("pasta", viewModel.filterState.value.query)
+            assertEquals("pasta", awaitItem().query)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test
@@ -145,7 +152,7 @@ class RecipesViewModelTest {
             awaitItem()
             advanceUntilIdle()
 
-            val errorState = awaitError()
+            val errorState = awaitRecipesError()
             assertEquals("No internet connection. Please check your network.", errorState.message)
 
             viewModel.retry()
@@ -168,7 +175,7 @@ class RecipesViewModelTest {
         }
     }
 
-    private suspend fun app.cash.turbine.ReceiveTurbine<RecipesUiState>.awaitError(): RecipesUiState.Error {
+    private suspend fun app.cash.turbine.ReceiveTurbine<RecipesUiState>.awaitRecipesError(): RecipesUiState.Error {
         while (true) {
             when (val state = awaitItem()) {
                 is RecipesUiState.Error -> return state

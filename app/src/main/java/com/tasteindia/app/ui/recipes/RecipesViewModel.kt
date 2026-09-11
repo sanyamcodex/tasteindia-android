@@ -115,7 +115,8 @@ class RecipesViewModel @Inject constructor(
             ingredient = criteria.ingredient,
             favouritesOnly = criteria.favouritesOnly,
             sortOrder = criteria.sortOrder,
-            favourites = favs
+            favourites = favs,
+            retryToken = retryTrigger.value
         )
     }.distinctUntilChanged()
         .flatMapLatest { params ->
@@ -288,6 +289,7 @@ class RecipesViewModel @Inject constructor(
         val ingredient: String?,
         val favouritesOnly: Boolean,
         val sortOrder: SortOrder,
-        val favourites: Set<String>
+        val favourites: Set<String>,
+        val retryToken: Int
     )
 }
