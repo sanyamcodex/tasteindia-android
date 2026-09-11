@@ -10,8 +10,6 @@ import com.tasteindia.app.data.remote.MealSummaryDto
 import com.tasteindia.app.data.repository.MealRepositoryImpl
 import com.tasteindia.app.domain.model.Meal
 import app.cash.turbine.test
-import io.mockk.confirmVerified
-import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,7 +42,7 @@ class FavouritesViewModelTest {
 
     @Test
     fun togglingFavouriteUpdatesStateFromFakeDaoWithoutNetworkCall() = runTest(dispatcher) {
-        val apiService = mockk<MealApiService>()
+        val apiService = UnusedMealApiService()
         val dao = FakeFavouriteDao()
         val repository = MealRepositoryImpl(apiService, dao)
         val viewModel = FavouritesViewModel(repository)
@@ -60,7 +58,46 @@ class FavouritesViewModelTest {
             cancelAndIgnoreRemainingEvents()
         }
 
-        confirmVerified(apiService)
+        assertEquals(0, apiService.callCount)
+    }
+
+    private class UnusedMealApiService : MealApiService {
+        var callCount = 0
+
+        override suspend fun filterByArea(area: String): com.tasteindia.app.data.remote.FilterResponse {
+            callCount++
+            error("Network call unexpected in offline favourite toggle")
+        }
+
+        override suspend fun filterByCategory(category: String): com.tasteindia.app.data.remote.FilterResponse {
+            callCount++
+            error("Network call unexpected in offline favourite toggle")
+        }
+
+        override suspend fun filterByIngredient(ingredient: String): com.tasteindia.app.data.remote.FilterResponse {
+            callCount++
+            error("Network call unexpected in offline favourite toggle")
+        }
+
+        override suspend fun lookupById(id: String): com.tasteindia.app.data.remote.LookupResponse {
+            callCount++
+            error("Network call unexpected in offline favourite toggle")
+        }
+
+        override suspend fun searchByName(name: String): com.tasteindia.app.data.remote.FilterResponse {
+            callCount++
+            error("Network call unexpected in offline favourite toggle")
+        }
+
+        override suspend fun listCategories(): com.tasteindia.app.data.remote.ListResponse {
+            callCount++
+            error("Network call unexpected in offline favourite toggle")
+        }
+
+        override suspend fun listAreas(): com.tasteindia.app.data.remote.ListResponse {
+            callCount++
+            error("Network call unexpected in offline favourite toggle")
+        }
     }
 
     private fun readMealFixture(): Meal {

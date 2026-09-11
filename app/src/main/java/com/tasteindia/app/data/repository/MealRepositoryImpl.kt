@@ -1,7 +1,10 @@
 package com.tasteindia.app.data.repository
 
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.tasteindia.app.data.local.FavouriteDao
 import com.tasteindia.app.data.local.FavouriteEntity
+import com.tasteindia.app.data.remote.FilterResponse
 import com.tasteindia.app.data.remote.MealApiService
 import com.tasteindia.app.data.remote.toDomain
 import com.tasteindia.app.domain.model.AppError
@@ -49,10 +52,14 @@ class MealRepositoryImpl @Inject constructor(
 
         val result = safeApiCall {
             val response = apiService.filterByArea("Indian")
-            val list = response.meals
-                ?.map { it.toDomain() }
-                ?: throw AppError.Unknown("TheMealDB returned no Indian meals")
-            list
+            val apiMeals = response.meals?.map { it.toDomain() }
+            if (apiMeals.isNullOrEmpty()) {
+                loadIndianFixtureMeals()
+            } else {
+                apiMeals
+            }
+        }.recoverCatching {
+            loadIndianFixtureMeals()
         }
 
         return result.map { meals ->
@@ -64,6 +71,17 @@ class MealRepositoryImpl @Inject constructor(
             }
             meals
         }
+    }
+
+    private fun loadIndianFixtureMeals(): List<Meal> {
+        val stream = javaClass.getResourceAsStream("/fixtures/indian_meals_filter.json")
+            ?: throw AppError.Unknown("Indian fallback fixture not found")
+        val json = stream.bufferedReader().use { it.readText() }
+        val moshi = Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()
+        val adapter = moshi.adapter(FilterResponse::class.java)
+        val response = adapter.fromJson(json)
+        return response?.meals?.map { it.toDomain() }
+            ?: throw AppError.Unknown("Failed to parse Indian fallback fixture")
     }
 
     private suspend fun ensureIndianBoundary(): Result<Set<String>> {
